@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>합격 시상대</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar glass">
+      <div class="brand-wrap">
+        <div class="brand-icon">🏆</div>
+        <div>
+          <div class="brand-title">합격 시상대</div>
+          <div class="brand-subtitle">오늘의 공부가, 가장 가고 싶은 대학을 위로 올립니다.</div>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <span class="pill" id="todayLabel"></span>
+        <span class="pill" id="universityCountLabel"></span>
+        <button class="ghost-btn" id="adminToggleBtn">엄마 모드</button>
+      </div>
+    </header>
+
+    <main id="appRoot"></main>
+  </div>
+
+  <div class="modal-backdrop hidden" id="adminModalBackdrop">
+    <div class="modal glass">
+      <div class="modal-header">
+        <div>
+          <div class="badge-inline">🔐 엄마 모드</div>
+          <h3>PIN을 입력하세요</h3>
+          <p>목표 대학은 엄마 모드에서만 수정할 수 있습니다.</p>
+        </div>
+        <button class="icon-btn" id="adminModalCloseBtn">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="password" id="adminPinInput" class="text-input" placeholder="PIN 입력" />
+        <div class="hint-card">기본 데모 PIN은 <strong>1234</strong> 입니다.</div>
+        <div class="error-message" id="pinError"></div>
+        <button class="primary-btn full" id="adminUnlockBtn">엄마 모드 열기</button>
+      </div>
+    </div>
+  </div>
+
+  <template id="setupTemplate">
+    <section class="setup-grid">
+      <section class="hero-setup">
+        <div class="badge-inline">✨ 수험생 목표 대학 대시보드</div>
+        <h1>목표 대학을 먼저 고정하고,<br />오늘의 공부를 점수로 쌓아보세요.</h1>
+        <p>
+          이 앱은 일반 투두앱이 아니라, 공부 완료 점수에 따라 목표 대학 시상대가 움직이는 수험생용 합격 대시보드입니다.
+        </p>
+        <div class="stat-grid three">
+          <article class="stat-card glass">
+            <div class="stat-label">대학 개수</div>
+            <div class="stat-value">3~5개</div>
+            <div class="stat-desc">최소 3개, 최대 5개까지 설정</div>
+          </article>
+          <article class="stat-card glass">
+            <div class="stat-label">수정 방식</div>
+            <div class="stat-value">잠금</div>
+            <div class="stat-desc">최초 확정 후 엄마 모드에서만 수정</div>
+          </article>
+          <article class="stat-card glass">
+            <div class="stat-label">핵심 보상</div>
+            <div class="stat-value">점수 랭킹</div>
+            <div class="stat-desc">완료한 공부가 대학 시상대에 반영</div>
+          </article>
+        </div>
+      </section>
+
+      <section class="setup-card glass">
+        <div class="section-title">목표 대학 설정</div>
+        <div class="section-subtitle">최소 3개, 최대 5개의 대학을 입력하세요. 확정 후에는 엄마 모드에서만 수정할 수 있습니다.</div>
+        <div id="setupInputs"></div>
+        <button class="ghost-btn full" id="addSetupSlotBtn">+ 대학 입력칸 추가</button>
+        <div class="hint-card">추천: 가장 가고 싶은 학교부터 입력하세요. 목표는 잠금 후 엄마 모드에서만 수정할 수 있습니다.</div>
+        <button class="primary-btn full" id="confirmSetupBtn">목표 대학 확정하고 시작하기</button>
+      </section>
+    </section>
+  </template>
+
+  <template id="dashboardTemplate">
+    <section class="dashboard-grid hero-grid">
+      <section class="hero-panel glass">
+        <div class="badge-inline">✨ 오늘의 메인 목표</div>
+        <h1>공부를 완료할수록<br />목표 대학이 시상대 위로 올라갑니다.</h1>
+        <p>
+          단순한 체크리스트가 아니라, 합격을 향한 진행 보드입니다. 오늘의 공부를 점수로 쌓고 어떤 대학이 가장 가까워지고 있는지 확인하세요.
+        </p>
+        <div class="stat-grid three" id="heroStats"></div>
+      </section>
+
+      <section class="podium-panel glass">
+        <div class="section-head">
+          <div>
+            <div class="section-title">목표 대학 시상대</div>
+            <div class="section-subtitle">점수 기준으로 가장 가까워지고 있는 대학 순위입니다.</div>
+          </div>
+          <div class="badge-inline" id="leaderBadge"></div>
+        </div>
+        <div class="leader-podium" id="leaderPodium"></div>
+        <div class="podium-rest top-rank-list" id="podiumRest"></div>
+      </section>
+    </section>
+
+    <section class="admin-panel glass hidden" id="adminPanel"></section>
+
+    <section class="dashboard-grid content-grid">
+      <section class="glass task-panel">
+        <div class="view-switch-wrap">
+          <button class="view-chip active" data-view-mode="day">일별</button>
+          <button class="view-chip" data-view-mode="week">주간</button>
+          <button class="view-chip" data-view-mode="month">월간</button>
+        </div>
+
+        <div class="task-calendar-toolbar">
+          <div>
+            <div class="section-title">학습 캘린더</div>
+            <div class="section-subtitle" id="calendarSectionSubtitle">날짜를 선택하고 주간/월간 캘린더에서 공부 인덱스를 확인하세요.</div>
+          </div>
+          <input id="selectedDateInput" type="date" class="text-input compact" />
+        </div>
+
+        <div id="calendarBoardWrap" class="calendar-board-wrap hidden">
+          <div id="calendarBoard"></div>
+        </div>
+
+        <div class="section-head task-head">
+          <div>
+            <div class="section-title">오늘 공부 추가</div>
+            <div class="section-subtitle" id="taskSectionSubtitle">입력한 항목은 완료 시 점수로 바뀌고 대학 랭킹에 반영됩니다.</div>
+          </div>
+        </div>
+
+        <div class="edit-hint hidden" id="editHintBox"></div>
+
+        <div class="task-form-grid">
+          <input id="taskTitleInput" class="text-input wide" placeholder="예: 수학 미적분 기출 2세트" />
+          <select id="taskSubjectInput" class="text-input"></select>
+          <select id="taskImportanceInput" class="text-input"></select>
+          <input id="taskMinutesInput" type="number" min="1" class="text-input" placeholder="예상 시간(분)" />
+                    <input id="taskDateInput" type="date" class="text-input" />
+        </div>
+
+        <div class="form-footer">
+          <div class="footer-pills">
+            <span class="pill accent" id="expectedPointsLabel"></span>
+            <span class="pill">편집은 엄마 모드에서만 가능합니다</span>
+          </div>
+          <div class="footer-actions">
+            <button class="ghost-btn hidden" id="cancelEditBtn">취소</button>
+            <button class="primary-btn" id="saveTaskBtn">공부 추가</button>
+          </div>
+        </div>
+      </section>
+
+      <aside class="glass side-panel">
+        <div class="section-title">대학 상세</div>
+        <div class="section-subtitle">가장 빠르게 올라가고 있는 대학의 현재 상태입니다.</div>
+        <div id="leaderDetail"></div>
+      </aside>
+    </section>
+
+    <section class="dashboard-grid bottom-grid">
+      <section class="glass list-panel">
+        <div class="section-head list-head">
+          <div>
+            <div class="section-title" id="taskListTitle">오늘 공부 리스트</div>
+            <div class="section-subtitle">완료하면 점수가 반영되고 대학 랭킹이 즉시 갱신됩니다.</div>
+          </div>
+          <div class="list-controls">
+            <div class="progress-wrap">
+              <div class="progress-meta">
+                <span>완료율</span>
+                <strong id="completionRateLabel">0%</strong>
+              </div>
+              <div class="progress-bar"><div class="progress-fill" id="completionRateFill"></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="detail-head" id="detailHead"></div>
+        <div id="taskList"></div>
+      </section>
+
+      <aside class="right-stack">
+        <section class="glass side-panel">
+          <div class="section-title">최근 성취 로그</div>
+          <div class="section-subtitle">완료 기록은 공부의 흔적으로 남습니다.</div>
+          <div id="recentLogs"></div>
+        </section>
+        <section class="glass side-panel">
+          <div class="section-title">주간 통계</div>
+          <div class="section-subtitle">최근 7일 기준 학습 흐름 요약입니다.</div>
+          <div class="weekly-grid" id="weeklyStats"></div>
+        </section>
+      </aside>
+    </section>
+  </template>
+
+  <script src="app.js"></script>
+</body>
+</html>
